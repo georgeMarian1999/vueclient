@@ -1,8 +1,16 @@
 const paths = require('./paths')
-
+const config = require('../config');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack')
 const { merge } = require('webpack-merge')
 const common = require('./webpack.base.js')
+const path = require("path");
+const HOST = process.env.HOST
+const PORT = process.env.PORT && Number(process.env.PORT)
+const env = require("../config/dev.env");
+
+console.log(paths.static);
 
 module.exports = merge(common, {
     // Set the mode to development or production
@@ -16,16 +24,46 @@ module.exports = merge(common, {
     // target: ['web', 'es5'],
 
     // Spin up a server for quick development
-    devServer: {
-        historyApiFallback: true,
-        contentBase: paths.build,
-        open: true,
-        compress: true,
+    devServer : {
+        clientLogLevel: 'warning',
+        historyApiFallback: {
+            rewrites: [
+                { from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') },
+            ],
+        },
         hot: true,
-        port: 8080,
+        contentBase: false, // since we use CopyWebpackPlugin.
+        compress: true,
+        proxy: config.dev.proxyTable,
+        host: HOST || config.dev.host,
+        port: PORT || config.dev.port,
+        open: config.dev.autoOpenBrowser,
     },
 
     plugins: [
+
+        new webpack.DefinePlugin({
+            'process.env': env
+        }),
+
+        new HtmlWebpackPlugin({
+            filename: 'index.html',
+            template: paths.static+ '/index.html',
+            inject: true
+        }),
+
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: paths.static,
+                    to: config.dev.assetsSubDirectory,
+                    globOptions: {
+                        ignore: ['.*'],
+                    },
+                },
+            ]
+        }),
+
         // Only update what has changed on hot reload
         new webpack.HotModuleReplacementPlugin(),
     ],

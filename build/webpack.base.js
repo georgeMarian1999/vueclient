@@ -1,25 +1,18 @@
-const pathtoresolve = require('path');
 const paths = require('./paths')
 
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-
+const config = require('../config');
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const webpack = require("webpack");
+const path = require("path");
 
 module.exports = {
     // Where webpack looks to start building the bundle
     entry: [ 'whatwg-fetch', paths.src + '/main.js'],
 
-    // resolve: {
-    //     extensions: [ '.js', '.vue' ],
-    //     alias: {
-    //         'components': pathtoresolve.resolve(__dirname, '../src/components/'),
-    //         'images': pathtoresolve.resolve(__dirname, '../src/images/'),
-    //         'styles': pathtoresolve.resolve(__dirname, '../src/styles/'),
-    //     }
-    // },
+
     resolve:{   extensions: ['.js', '.vue', '.json'],
         alias: {
             'vue$': 'vue/dist/vue.esm.js',
@@ -48,26 +41,6 @@ module.exports = {
         new CleanWebpackPlugin(),
 
         // Copies files from target to destination folder
-        new CopyWebpackPlugin({
-            patterns: [
-                {
-                    from: paths.public,
-                    to: 'assets',
-                    globOptions: {
-                        ignore: ['*.DS_Store'],
-                    },
-                },
-            ],
-        }),
-
-        // Generates an HTML file from a template
-        // Generates deprecation warning: https://github.com/jantimon/html-webpack-plugin/issues/1501
-        new HtmlWebpackPlugin({
-            title: 'Vue Client',
-            favicon: paths.public + '/favicon.ico',
-            template: paths.public + '/index.html', // template file
-            filename: 'index.html', // output file
-        }),
     ],
 
     // Determine how modules within the project are treated
@@ -92,6 +65,14 @@ module.exports = {
                             implementation: require('sass'),
                         },
                     },
+                    {
+                        loader: 'sass-resources-loader',
+                        options: {
+                            resources: [
+                                path.resolve(__dirname, '../src/assets/styles/scss/globalImports.scss')
+                            ]
+                        }
+                    }
                 ],
             },
 

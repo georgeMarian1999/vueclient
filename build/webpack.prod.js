@@ -1,9 +1,16 @@
 const paths = require('./paths')
 const { merge } = require('webpack-merge')
 const common = require('./webpack.base.js')
-
+const utils = require('./utils');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
+const config = require('../config');
+const path = require("path");
+const webpack = require("webpack");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+
+const env = require('../config/prod.env')
 
 module.exports = merge(common, {
     mode: 'production',
@@ -11,8 +18,8 @@ module.exports = merge(common, {
 
     output: {
         path: paths.build,
-        publicPath: '/',
-        filename: 'js/[name].[contenthash].bundle.js',
+        publicPath: config.build.assetsPublicPath,
+        filename: utils.assetsPath('js/[name].[contenthash].bundle.js'),
     },
 
 
@@ -23,9 +30,44 @@ module.exports = merge(common, {
         // Extracts CSS into separate files
         // Note: style-loader is for development, MiniCssExtractPlugin is for production
         new MiniCssExtractPlugin({
-            filename: 'styles/[name].[contenthash].css',
+            filename: utils.assetsPath('css/[name].[contenthash].css'),
             chunkFilename: '[id].css',
         }),
+
+        new webpack.DefinePlugin({
+            'process.env': env
+        }),
+
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: paths.static,
+                    to: config.build.staticDirectory,
+                    globOptions: {
+                        ignore: ['.*'],
+                    },
+                },
+            ]
+        }),
+
+
+
+        new HtmlWebpackPlugin({
+            filename: config.build.index,
+            template: paths.static + '/index.html',
+            favicon:  paths.static + '/favicon.png',
+            inject: true,
+            minify: {
+                removeComments: true,
+                collapseWhitespace: true,
+                removeRedundantAttributes: true,
+                // more options:
+                // https://github.com/kangax/html-minifier#options-quick-reference
+            },
+            // necessary to consistently work with multiple chunks via CommonsChunkPlugin
+            // chunksSortMode: 'auto'
+        }),
+
     ],
     module: {
         rules: [
@@ -42,7 +84,22 @@ module.exports = merge(common, {
                     },
                     'postcss-loader',
                     'sass-loader',
-                ],
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            implementation: require('sass'),
+                        },
+
+                    },
+                    {
+                        loader: 'sass-resources-loader',
+                        options: {
+                            resources: [
+                                path.resolve(__dirname, '../src/assets/styles/scss/globalImports.scss')
+                            ]
+                        }
+                    }
+                    ]
             },
         ],
     },
